@@ -32,12 +32,10 @@ class _EstablecimientosListViewState extends State<EstablecimientosListView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Establecimientos')),
-      // Botón para CREAR
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          // Navegamos al formulario. Usamos await para recargar la lista al volver
           await context.push('/establecimientos/form');
-          _cargarDatos(); // Recarga la lista si se creó uno nuevo
+          _cargarDatos();
         },
         child: const Icon(Icons.add),
       ),
@@ -55,7 +53,6 @@ class _EstablecimientosListViewState extends State<EstablecimientosListView> {
 
           final isLoading = snapshot.connectionState == ConnectionState.waiting;
 
-          // Datos Mock para el Skeletonizer
           List<EstablecimientoModel> establecimientos = List.generate(
             6,
             (index) => EstablecimientoModel(
@@ -71,7 +68,6 @@ class _EstablecimientosListViewState extends State<EstablecimientosListView> {
             establecimientos = snapshot.data!;
           }
 
-          // Si la lista está vacía y ya cargó
           if (!isLoading && establecimientos.isEmpty) {
             return const Center(
               child: Text('No hay establecimientos registrados.'),
@@ -90,7 +86,6 @@ class _EstablecimientosListViewState extends State<EstablecimientosListView> {
                     vertical: 8,
                   ),
                   child: ListTile(
-                    // Logo del establecimiento (con manejo de errores si la URL falla)
                     leading: est.logo != null && est.logo!.isNotEmpty
                         ? CircleAvatar(
                             backgroundImage: NetworkImage(est.logo!),
@@ -104,12 +99,23 @@ class _EstablecimientosListViewState extends State<EstablecimientosListView> {
                     ),
                     subtitle: Text('NIT: ${est.nit}\nTel: ${est.telefono}'),
                     isThreeLine: true,
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                    onTap: () async {
+                    // Botón para EDITAR (PUT)
+                    trailing: IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.blue),
+                      tooltip: 'Editar',
+                      onPressed: () async {
+                        if (!isLoading) {
+                          await context.push(
+                            '/establecimientos/form/${est.id}',
+                          );
+                          _cargarDatos();
+                        }
+                      },
+                    ),
+                    // Al tocar la tarjeta, vamos a la vista de detalle completa
+                    onTap: () {
                       if (!isLoading) {
-                        // Navegamos al DETALLE/EDITAR pasando el ID
-                        await context.push('/establecimientos/form/${est.id}');
-                        _cargarDatos(); // Recarga al volver por si se editó/eliminó
+                        context.push('/establecimientos/detail/${est.id}');
                       }
                     },
                   ),

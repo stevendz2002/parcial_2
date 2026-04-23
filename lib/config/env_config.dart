@@ -7,4 +7,6 @@ class EnvConfig {
   static String get apiParqueadero =>
       dotenv.env['API_PARQUEADERO_URL'] ??
       'https://parking.visiontic.com.co/api';
+  static String get apiLogoUrl =>
+      dotenv.env['API_LOGO_URL'] ?? 'https://parking.visiontic.com.co/logos';
 }

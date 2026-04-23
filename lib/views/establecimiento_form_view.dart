@@ -19,7 +19,7 @@ class _EstablecimientoFormViewState extends State<EstablecimientoFormView> {
   final _formKey = GlobalKey<FormState>();
   final _apiService = EstablecimientosService();
 
-  // Controladores de texto
+  // Controladores de texto (estos guardan los datos antes de editar)
   final _nombreCtrl = TextEditingController();
   final _nitCtrl = TextEditingController();
   final _direccionCtrl = TextEditingController();
@@ -34,32 +34,39 @@ class _EstablecimientoFormViewState extends State<EstablecimientoFormView> {
   @override
   void initState() {
     super.initState();
+    // Si estamos editando (es decir, llegó un ID), cargamos los datos de inmediato
     if (_esEdicion) {
       _cargarDetalle();
     }
   }
 
   Future<void> _cargarDetalle() async {
+    // Encendemos la barra de carga mientras trae los datos de la API
     setState(() => _isLoading = true);
     try {
       final est = await _apiService.getEstablecimiento(
         widget.establecimientoId!,
       );
+
+      // AQUÍ ESTÁ EL REQUERIMIENTO DEL PUT:
+      // Pre-llenamos los campos del formulario con los datos actuales
       _nombreCtrl.text = est.nombre;
       _nitCtrl.text = est.nit;
       _direccionCtrl.text = est.direccion;
       _telefonoCtrl.text = est.telefono;
       _logoActualUrl = est.logo;
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     } finally {
+      // Apagamos la barra de carga para mostrar el formulario ya lleno
       setState(() => _isLoading = false);
     }
   }
 
-  // Método para usar la galería o cámara
   Future<void> _seleccionarImagen() async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: ImageSource.gallery);
@@ -83,39 +90,43 @@ class _EstablecimientoFormViewState extends State<EstablecimientoFormView> {
       );
 
       if (_esEdicion) {
-        // PUT (Spoofing)
+        // Ejecutar el PUT si es edición
         await _apiService.updateEstablecimiento(
           widget.establecimientoId!,
           modelo,
-          _imagenSeleccionada?.path,
+          imagePath:
+              _imagenSeleccionada?.path, // <--- AGREGAMOS "imagePath:" AQUÍ
         );
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Actualizado con éxito')),
+            const SnackBar(content: Text('Actualizado con éxito (PUT)')),
           );
+        }
       } else {
-        // POST
+        // Ejecutar POST si es creación
         await _apiService.createEstablecimiento(
           modelo,
           _imagenSeleccionada?.path,
         );
-        if (mounted)
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Creado con éxito')));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Creado con éxito (POST)')),
+          );
+        }
       }
-      if (mounted) context.pop(); // Volver atrás
+      if (mounted) context.pop();
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
   Future<void> _eliminar() async {
-    // Diálogo de confirmación
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -139,15 +150,17 @@ class _EstablecimientoFormViewState extends State<EstablecimientoFormView> {
       try {
         await _apiService.deleteEstablecimiento(widget.establecimientoId!);
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Eliminado con éxito')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Eliminado con éxito (DELETE)')),
+          );
           context.pop();
         }
       } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        }
         setState(() => _isLoading = false);
       }
     }
@@ -168,7 +181,8 @@ class _EstablecimientoFormViewState extends State<EstablecimientoFormView> {
             ),
         ],
       ),
-      body: _isLoading && _esEdicion && _nombreCtrl.text.isEmpty
+      // Si está cargando los datos iniciales, mostramos solo un círculo
+      body: (_esEdicion && _isLoading && _nombreCtrl.text.isEmpty)
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
@@ -176,7 +190,6 @@ class _EstablecimientoFormViewState extends State<EstablecimientoFormView> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // --- SELECTOR DE IMAGEN ---
                     GestureDetector(
                       onTap: _seleccionarImagen,
                       child: CircleAvatar(
@@ -207,7 +220,6 @@ class _EstablecimientoFormViewState extends State<EstablecimientoFormView> {
                     ),
                     const SizedBox(height: 20),
 
-                    // --- CAMPOS DE TEXTO ---
                     TextFormField(
                       controller: _nombreCtrl,
                       decoration: const InputDecoration(
@@ -246,7 +258,6 @@ class _EstablecimientoFormViewState extends State<EstablecimientoFormView> {
                     ),
                     const SizedBox(height: 30),
 
-                    // --- BOTÓN GUARDAR ---
                     SizedBox(
                       width: double.infinity,
                       height: 50,
