@@ -28,6 +28,11 @@ class AccidentesService {
   // --- LÓGICA DEL ISOLATE ---
   // IMPORTANTE: Debe ser un método estático para que el Isolate lo pueda ejecutar aislado.
   static Map<String, dynamic> _procesarEstadisticas(List<dynamic> data) {
+    final stopwatch = Stopwatch()..start();
+
+    // Notifica inicio
+    print('[Isolate] Iniciado — ${data.length} registros recibidos');
+
     // Convertimos el JSON a Modelos
     final accidentes = data.map((e) => AccidenteModel.fromJson(e)).toList();
 
@@ -59,6 +64,10 @@ class AccidentesService {
     var sortedBarrios = barrioCount.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value)); // Ordena de mayor a menor
     var top5Barrios = Map.fromEntries(sortedBarrios.take(5));
+
+    stopwatch.stop();
+    // Notifica fin
+    print('[Isolate] Completado en ${stopwatch.elapsedMilliseconds} ms');
 
     // Retornamos el diccionario listo para que fl_chart lo pinte
     return {
