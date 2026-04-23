@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import '../themes/app_theme.dart';
 
 class CustomPieChart extends StatelessWidget {
   final Map<String, int> data;
@@ -8,33 +9,28 @@ class CustomPieChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Lista de colores para diferenciar las porciones de la torta
-    final colors = [
-      Colors.blue,
-      Colors.red,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-    ];
-    int colorIndex = 0;
+    final total = data.values.fold<int>(0, (sum, value) => sum + value);
+    final entries = data.entries.toList();
 
-    List<PieChartSectionData> sections = data.entries.map((entry) {
-      final color = colors[colorIndex % colors.length];
-      colorIndex++;
+    List<PieChartSectionData> sections = List.generate(entries.length, (index) {
+      final entry = entries[index];
+      final color = AppTheme.chartColors[index % AppTheme.chartColors.length];
+      final percentage = total > 0
+          ? ((entry.value / total) * 100).toStringAsFixed(1)
+          : "0";
+
       return PieChartSectionData(
         color: color,
         value: entry.value.toDouble(),
-        // Mostramos el nombre y el valor en la torta
-        title: '${entry.key}\n${entry.value}',
+        title: '$percentage%',
         radius: 60,
         titleStyle: const TextStyle(
-          fontSize: 10,
+          fontSize: 12,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
       );
-    }).toList();
+    });
 
     return SizedBox(
       height: 220,

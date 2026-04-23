@@ -23,7 +23,12 @@ class _AccidentesStatsViewState extends State<AccidentesStatsView> {
   }
 
   // Widget para contener cada gráfica en una tarjeta bonita
-  Widget _buildChartCard(String title, Widget chart) {
+  Widget _buildChartCard(
+    String title,
+    Widget chart, {
+    String? description,
+    Map<String, int>? dataForLegend,
+  }) {
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(vertical: 10),
@@ -40,10 +45,61 @@ class _AccidentesStatsViewState extends State<AccidentesStatsView> {
             ),
             const SizedBox(height: 20),
             chart,
+            if (description != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                description,
+                style: const TextStyle(fontSize: 14, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (dataForLegend != null && dataForLegend.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: _buildLegendItems(dataForLegend!),
+              ),
+            ],
           ],
         ),
       ),
     );
+  }
+
+  // Construye los ítems de la leyenda basado en los datos
+  List<Widget> _buildLegendItems(Map<String, int> data) {
+    final colors = [
+      Colors.blue,
+      Colors.red,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+    ];
+    final List<Widget> items = [];
+    int colorIndex = 0;
+
+    data.forEach((key, value) {
+      final color = colors[colorIndex % colors.length];
+      items.add(
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 6),
+            Text(key, style: const TextStyle(fontSize: 12)),
+          ],
+        ),
+      );
+      colorIndex++;
+    });
+
+    return items;
   }
 
   @override
@@ -86,24 +142,36 @@ class _AccidentesStatsViewState extends State<AccidentesStatsView> {
                 _buildChartCard(
                   'Clase de Accidente',
                   CustomPieChart(data: data['clase']),
+                  description:
+                      'Distribución porcentual de los tipos de accidente registrados',
+                  dataForLegend: data['clase'] as Map<String, int>?,
                 ),
 
                 // 2. Distribución por gravedad -> PieChart (o BarChart, elegí Pie para variar)
                 _buildChartCard(
                   'Gravedad del Accidente',
                   CustomPieChart(data: data['gravedad']),
+                  description:
+                      'Distribución porcentual según la gravedad de los accidentes',
+                  dataForLegend: data['gravedad'] as Map<String, int>?,
                 ),
 
                 // 3. Top 5 barrios con más accidentes -> BarChart
                 _buildChartCard(
                   'Top 5 Barrios',
                   CustomBarChart(data: data['topBarrios']),
+                  description:
+                      'Barrios con mayor incidencia de accidentes (Top 5)',
+                  dataForLegend: data['topBarrios'] as Map<String, int>?,
                 ),
 
                 // 4. Distribución por día de la semana -> BarChart
                 _buildChartCard(
                   'Distribución por Día',
                   CustomBarChart(data: data['dias']),
+                  description:
+                      'Distribución de accidentes por día de la semana',
+                  dataForLegend: data['dias'] as Map<String, int>?,
                 ),
               ],
             ),
