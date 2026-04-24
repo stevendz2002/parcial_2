@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
+// Rutas de ejemplo, ajusta según tu proyecto
 import '../services/accidentes_service.dart';
 import '../widgets/custom_pie_chart.dart';
 import '../widgets/custom_bar_chart.dart';
+import '../themes/app_theme.dart';
 
 class AccidentesStatsView extends StatefulWidget {
   const AccidentesStatsView({super.key});
@@ -57,8 +59,8 @@ class _AccidentesStatsViewState extends State<AccidentesStatsView> {
               const SizedBox(height: 16),
               Wrap(
                 spacing: 8,
-                runSpacing: 4,
-                children: _buildLegendItems(dataForLegend!),
+                runSpacing: 8,
+                children: _buildLegendItems(dataForLegend),
               ),
             ],
           ],
@@ -67,21 +69,15 @@ class _AccidentesStatsViewState extends State<AccidentesStatsView> {
     );
   }
 
-  // Construye los ítems de la leyenda basado en los datos
+  // Construye los ítems de la leyenda basado en los colores del AppTheme
   List<Widget> _buildLegendItems(Map<String, int> data) {
-    final colors = [
-      Colors.blue,
-      Colors.red,
-      Colors.green,
-      Colors.orange,
-      Colors.purple,
-      Colors.teal,
-    ];
     final List<Widget> items = [];
-    int colorIndex = 0;
+    final keys = data.keys.toList();
 
-    data.forEach((key, value) {
-      final color = colors[colorIndex % colors.length];
+    for (int i = 0; i < keys.length; i++) {
+      // Usamos el color centralizado
+      final color = AppTheme.chartColors[i % AppTheme.chartColors.length];
+
       items.add(
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -92,12 +88,11 @@ class _AccidentesStatsViewState extends State<AccidentesStatsView> {
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
             const SizedBox(width: 6),
-            Text(key, style: const TextStyle(fontSize: 12)),
+            Text(keys[i], style: const TextStyle(fontSize: 12)),
           ],
         ),
       );
-      colorIndex++;
-    });
+    }
 
     return items;
   }
@@ -147,7 +142,7 @@ class _AccidentesStatsViewState extends State<AccidentesStatsView> {
                   dataForLegend: data['clase'] as Map<String, int>?,
                 ),
 
-                // 2. Distribución por gravedad -> PieChart (o BarChart, elegí Pie para variar)
+                // 2. Distribución por gravedad -> PieChart
                 _buildChartCard(
                   'Gravedad del Accidente',
                   CustomPieChart(data: data['gravedad']),
@@ -158,10 +153,9 @@ class _AccidentesStatsViewState extends State<AccidentesStatsView> {
 
                 // 3. Top 5 barrios con más accidentes -> BarChart
                 _buildChartCard(
-                  'Top 5 Barrios',
+                  'Top Barrios',
                   CustomBarChart(data: data['topBarrios']),
-                  description:
-                      'Barrios con mayor incidencia de accidentes (Top 5)',
+                  description: 'Barrios con mayor incidencia de accidentes',
                   dataForLegend: data['topBarrios'] as Map<String, int>?,
                 ),
 
